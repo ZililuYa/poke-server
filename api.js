@@ -12,7 +12,7 @@ const api = {
     });
   },
   setHttpGet: (app) => {
-    app.get('/img', function (req, res) {
+    app.get('/img.png', function (req, res) {
       lib.getImg(req.query.url, res);
     });
     app.get('/app/getList', function (req, res) {
