@@ -3,6 +3,19 @@ let http = require('http');
 let jsDom = require('jsdom');
 let li = 0;//当前下载启始值
 const lib = {
+  getImg (url, r) {
+    http.get(url, function (res) {
+      let imgData = "";
+      res.setEncoding("binary"); //一定要设置response的编码为binary否则会下载下来的图片打不开
+      res.on("data", function (chunk) {
+        imgData += chunk;
+      });
+      res.on("end", function () {
+        r.type('png');
+        r.send(new Buffer(imgData, 'binary'))
+      });
+    });
+  },
   saveJson (name, data) {
     fs.writeFile(__dirname + '/data/' + name, data, "utf-8", function (err) {
       if (err) {
