@@ -165,7 +165,7 @@ const lib = {
           let data = {}
           try {
             // 获取图片
-            data.imgUrl = window.$('.roundy.bgwhite.fulltable .image img').eq(0).attr('data-url').replace('//media.52poke.com', '')
+            data.imgUrl = window.$('.roundy.bgwhite.fulltable .image img').eq(0).attr('data-url').replace('//media.52poke.com', '//s1.52poke.wiki')
 
             // 获取分类
             data.type = window.$('a[title=分类]').eq(0).parent().next().text().trim()
@@ -188,7 +188,7 @@ const lib = {
             data.weight = window.$('a[title=宝可梦列表（按体重排序）]').eq(0).parent().next().find('td').eq(0).text().trim()
 
             // 获取体形
-            data.figure = window.$('a[title=宝可梦列表（按体形分类）]').eq(0).parent().next().find('img').attr('data-url').replace('//media.52poke.com', '')
+            data.figure = window.$('a[title=宝可梦列表（按体形分类）]').eq(0).parent().next().find('img').attr('data-url').replace('//media.52poke.com', '//s1.52poke.wiki')
 
             // 获取捕获率
             data.capture = window.$('a[title=捕获率]').eq(0).parent().next().find('small').eq(0).text().trim()
