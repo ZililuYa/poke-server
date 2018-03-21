@@ -1,2 +1,2 @@
-forever stop bin/www
-forever start bin/www
+forever stop server.js
+forever start server.js
