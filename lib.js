@@ -155,6 +155,39 @@ const lib = {
     }
     return srcFs.replace(__dirname, '');
   },
+  skillDetail (url, res) {
+    if (url) {
+      let path = 'https://wiki.52poke.com' + url;
+      jsDom.env(
+        path,
+        ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],
+        function (errors, window) {
+          let data = {}
+          try {
+            // 获取描述
+            data.describe = window.$('td.roundybottom.bgwhite.at-l').eq(0).text().trim().split('\n')
+
+            data.additional = [window.$('#toc').next().next().text().trim()]
+            lib.additionalFun(data.additional, window.$('#toc').next().next())
+
+            data.range = window.$('table.at-c').eq(1).find('tr').eq(2).text().trim()
+
+          } catch (e) {
+            console.log(e);
+          }
+          lib.send(res, data)
+        }
+      );
+    } else {
+      lib.sendNull(res)
+    }
+  },
+  additionalFun (arr, h2) {
+    if (h2.next()[0].tagName.toLowerCase() === 'p') {
+      arr.push(h2.next().text().trim())
+      lib.additionalFun(arr, h2.next())
+    }
+  },
   pokeDetail (url, res) {
     if (url) {
       let path = 'https://wiki.52poke.com' + url;

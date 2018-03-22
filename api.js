@@ -10,6 +10,9 @@ const api = {
     app.post('/api/poke', function (req, res) {
       lib.pokeDetail(req.body.url, res)
     });
+    app.post('/api/skill', function (req, res) {
+      lib.skillDetail(req.body.url, res)
+    });
   },
   setHttpGet: (app) => {
     app.get('/img.png', function (req, res) {
