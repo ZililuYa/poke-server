@@ -8,10 +8,10 @@ const api = {
   },
   setHttpPost: (app) => {
     app.post('/api/poke', function (req, res) {
-      lib.pokeDetail(req.body.url, res)
+      lib.pokeDetail(req.body, res)
     });
     app.post('/api/skill', function (req, res) {
-      lib.skillDetail(req.body.url, res)
+      lib.skillDetail(req.body, res)
     });
   },
   setHttpGet: (app) => {

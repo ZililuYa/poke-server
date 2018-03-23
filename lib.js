@@ -17,7 +17,7 @@ const lib = {
     });
   },
   saveJson (name, data) {
-    fs.writeFile(__dirname + '/data/' + name, data, "utf-8", function (err) {
+    fs.writeFile(name, data, "utf-8", function (err) {
       if (err) {
         console.error(err);
       }
@@ -155,9 +155,21 @@ const lib = {
     }
     return srcFs.replace(__dirname, '');
   },
-  skillDetail (url, res) {
-    if (url) {
-      let path = 'https://wiki.52poke.com' + url;
+  skillDetail (data, res) {
+    if (data.url) {
+      let json = __dirname + '/data/skill/' + data.id + '.json'
+      if (lib.fsExistsSync(json)) {
+        var stream = fs.createReadStream(json);
+        var data = "";
+        stream.on('data', function (chrunk) {//将数据分为一块一块的传递
+          data += chrunk;
+        });
+        stream.on('end', function () {
+          lib.send(res, JSON.parse(data))
+        });
+        return
+      }
+      let path = 'https://wiki.52poke.com' + data.url;
       jsDom.env(
         path,
         ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],
@@ -175,6 +187,7 @@ const lib = {
           } catch (e) {
             console.log(e);
           }
+          lib.saveJson(json, JSON.stringify(data))
           lib.send(res, data)
         }
       );
@@ -183,14 +196,29 @@ const lib = {
     }
   },
   additionalFun (arr, h2) {
-    if (h2.next()[0].tagName.toLowerCase() === 'p') {
-      arr.push(h2.next().text().trim())
+    let name = h2.next()[0].tagName.toLowerCase()
+    if (name !== 'h2') {
+      if (name === 'p' || name === 'h3') {
+        arr.push(h2.next().text().trim())
+      }
       lib.additionalFun(arr, h2.next())
     }
   },
-  pokeDetail (url, res) {
-    if (url) {
-      let path = 'https://wiki.52poke.com' + url;
+  pokeDetail (data, res) {
+    if (data.url) {
+      let json = __dirname + '/data/poke/' + data.id + '.json'
+      if (lib.fsExistsSync(json)) {
+        var stream = fs.createReadStream(json);
+        var data = "";
+        stream.on('data', function (chrunk) {//将数据分为一块一块的传递
+          data += chrunk;
+        });
+        stream.on('end', function () {
+          lib.send(res, JSON.parse(data))
+        });
+        return
+      }
+      let path = 'https://wiki.52poke.com' + data.url;
       jsDom.env(
         path,
         ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],
@@ -242,6 +270,7 @@ const lib = {
           } catch (e) {
             console.log(e);
           }
+          lib.saveJson(json, JSON.stringify(data))
           lib.send(res, data)
         }
       );
