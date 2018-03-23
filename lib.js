@@ -23,6 +23,9 @@ const lib = {
       }
     });
   },
+  trim (val) {
+    return val ? val.trim() : ''
+  },
   apiListZs (res) {
     let path = 'https://wiki.52poke.com/wiki/%E6%8B%9B%E5%BC%8F%E5%88%97%E8%A1%A8';
     jsdom.env(
@@ -67,6 +70,47 @@ const lib = {
         }
         this.saveJson('zs.json', JSON.stringify(data));
         res.send('成功');
+        // rs.send(data);
+      }
+    );
+  },
+  apiListTx () {
+    console.log('获取特性列表')
+    let path = 'https://wiki.52poke.com/wiki/%E7%89%B9%E6%80%A7%E5%88%97%E8%A1%A8';
+    jsDom.env(
+      path,
+      ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],
+      function (errors, window) {
+        let eplist = window.$('table.eplist.roundy');
+        let data = {
+          rows: []
+        };
+        try {
+          for (let i in eplist.find('tr')) {
+            let tr = eplist.find('tr').eq(i);
+            let tl = tr.find('td').length
+            let o = {
+              id: lib.trim(tr.find('td').eq(tl - 7).text()),
+              name: lib.trim(tr.find('td').eq(tl - 6).find('a').html()),
+              // href: tr.find('td').eq(tl - 5).find('a').attr('href'),
+              // ja: tr.find('td').eq(tl - 4).html(),
+              // en: tr.find('td').eq(tl - 3).html(),
+              zc: lib.trim(tr.find('td').eq(tl - 2).text()),
+              yc: lib.trim(tr.find('td').eq(tl - 1).text())
+            };
+
+            // o.id = o.id.replace('\n', '');
+            // getImage(o);
+            if (o.name) {
+              o.id = o.id.replace('#', '')
+              data.rows.push(o);
+            }
+          }
+
+        } catch (e) {
+          console.log(e);
+        }
+        lib.saveJson(__dirname + '/data/tx.json', JSON.stringify(data));
         // rs.send(data);
       }
     );
@@ -267,6 +311,50 @@ const lib = {
             // 获取蛋组
             data.egg = window.$('a[title=宝可梦培育]').eq(0).parent().next().find('td').eq(0).text().trim()
 
+          } catch (e) {
+            console.log(e);
+          }
+          lib.saveJson(json, JSON.stringify(data))
+          lib.send(res, data)
+        }
+      );
+    } else {
+      lib.sendNull(res)
+    }
+  },
+  pokeFeatures (data, res) {
+    if (data.name) {
+      let json = __dirname + '/data/features/' + data.id + '.json'
+      if (lib.fsExistsSync(json)) {
+        var stream = fs.createReadStream(json);
+        var data = "";
+        stream.on('data', function (chrunk) {//将数据分为一块一块的传递
+          data += chrunk;
+        });
+        stream.on('end', function () {
+          lib.send(res, JSON.parse(data))
+        });
+        return
+      }
+      let path = 'https://wiki.52poke.com/wiki/' + encodeURI(data.name);
+      jsDom.env(
+        path,
+        ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],
+        function (errors, window) {
+          let data = {}
+          try {
+            // 获取描述
+            data.describe = window.$('table.roundy.center').text().trim()
+
+            data.additional = [window.$('#toc').next().next().text().trim()]
+            lib.additionalFun(data.additional, window.$('#toc').next().next())
+
+            let eplist = window.$('table.roundy.a-c.at-c').eq(0);
+            data.arr = []
+            for (let i in eplist.find('tr')) {
+              let tr = eplist.find('tr').eq(i);
+              if (tr.find('td').eq(2).text()) data.arr.push(lib.trim(tr.find('td').eq(0).text()))
+            }
           } catch (e) {
             console.log(e);
           }
