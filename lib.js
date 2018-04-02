@@ -2,6 +2,8 @@ let fs = require('fs');
 let http = require('http');
 let jsDom = require('jsdom');
 let li = 0;//当前下载启始值
+const list = require('./data/list.json')
+const listSkill = require('./data/skill.json')
 const lib = {
   getImg (url, r) {
     http.get(url, function (res) {
@@ -16,19 +18,111 @@ const lib = {
       });
     });
   },
-  saveJson (name, data) {
+  saveJson (name, data, callback = () => {
+  }) {
     fs.writeFile(name, data, "utf-8", function (err) {
       if (err) {
         console.error(err);
+      } else {
+        callback()
       }
     });
   },
   trim (val) {
-    return val ? val.trim() : ''
+    return val ? val.toString().trim() : ''
+  },
+  getSkillId (a) {
+    for (let i in listSkill.rows) {
+      if (listSkill.rows[i].name.indexOf(lib.trim(a.text())) !== -1) return listSkill.rows[i].id
+      if (listSkill.rows[i].href.indexOf(lib.trim(a.attr('href'))) !== -1) return listSkill.rows[i].id
+    }
+    return 0
+  },
+  listNum: 0,// 开始的索引
+  apiListCalc () {
+    console.log('apiListCalc')
+    for (let i in list.rows) {
+      if (!lib.fsExistsSync(__dirname + '/data/pokeSkill/' + list.rows[i].id + '.json')) {
+        console.log(list.rows[i].id)
+      }
+    }
+  },
+  apiListPokeSkill (id) {
+    id ? lib.listNum = parseInt(id) : ''
+    if (lib.listNum >= list.rows.length) {
+      lib.listNum = 0
+      return
+    }
+    console.log(list.rows[lib.listNum].href)
+    let path = 'https://wiki.52poke.com' + list.rows[lib.listNum].href;
+    jsDom.env(
+      path,
+      ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],
+      function (errors, window) {
+        let eplists = window.$('table.roundy.sortable');
+        let ep1, ep2;
+        for (let t in eplists) {
+          if (eplists.eq(t).prev().text() === '可学会的招式') {
+            ep1 = eplists.eq(t)
+          }
+          if (eplists.eq(t).prev().text() === '能使用的招式学习器') {
+            ep2 = eplists.eq(t)
+          }
+        }
+        // if (!ep1) ep1 = window.$('.varformn table.roundy.sortable').eq(0)
+        // if (!ep2) ep2 = window.$('.varformn table.roundy.sortable').eq(1)
+        if (!ep1) ep1 = window.$('table.roundy.sortable').eq(0)
+        if (!ep2) ep2 = window.$('table.roundy.sortable').eq(1)
+        let data = {
+          rows: [],
+          cd: []
+        };
+        try {
+          for (let i in ep1.find('tr')) {
+            let tr = ep1.find('tr').eq(i);
+            let o = {
+              age: lib.trim(tr.find('td').eq(0).text()),
+              sid: lib.getSkillId(tr.find('td').eq(2).find('a')),
+              // name: tr.find('td').eq(tl - 6).find('a').text()
+            };
+            if (o.age && o.age.length <= 4) {
+              console.log(o.age, tr.find('td').eq(2).find('a').text())
+              data.rows.push(o);
+            }
+          }
+
+
+          for (let i in ep2.find('tr')) {
+            let tr = ep2.find('tr').eq(i);
+            let iii = lib.trim(tr.find('td').eq(2).find('a').text())
+            let o = {
+              // age: lib.trim(tr.find('td').eq(0).text()),
+              sid: lib.getSkillId(tr.find('td').eq(2).find('a')),
+              // name: tr.find('td').eq(tl - 6).find('a').text()
+            };
+            if (o.sid && iii) {
+              console.log(iii)
+              data.cd.push(o);
+            }
+          }
+
+        } catch (e) {
+          console.log(e);
+        }
+        lib.listNum++
+        // this.saveJson('zs.json', JSON.stringify(data));
+        lib.saveJson(__dirname + '/data/pokeSkill/' + list.rows[lib.listNum - 1].id + '.json', JSON.stringify(data), lib.apiListPokeSkill);
+        // lib.saveJson(__dirname + '/data/pokeSkill/' + list.rows[lib.listNum - 1].id + '.json', JSON.stringify(data));
+        console.log(list.rows[lib.listNum - 1].name, '数据偷取成功', '-----------------', list.rows[lib.listNum - 1].id)
+        // res.send('成功');
+        // rs.send(data);
+
+      }
+    );
   },
   apiListZs (res) {
     let path = 'https://wiki.52poke.com/wiki/%E6%8B%9B%E5%BC%8F%E5%88%97%E8%A1%A8';
-    jsdom.env(
+    jsDom.env(
       path,
       ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],
       function (errors, window) {
@@ -111,6 +205,53 @@ const lib = {
           console.log(e);
         }
         lib.saveJson(__dirname + '/data/tx.json', JSON.stringify(data));
+        // rs.send(data);
+      }
+    );
+  },
+  nowId: -1,
+  apiListNl () {
+    console.log('获取能力列表')
+    let path = 'https://wiki.52poke.com/wiki/%E7%A7%8D%E6%97%8F%E5%80%BC%E5%88%97%E8%A1%A8%EF%BC%88%E7%AC%AC%E4%B8%83%E4%B8%96%E4%BB%A3%EF%BC%89';
+    jsDom.env(
+      path,
+      ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],
+      function (errors, window) {
+        let eplist = window.$('table.roundy.sortable');
+        let data = {
+          rows: []
+        };
+        try {
+          for (let i in eplist.find('tr')) {
+            let tr = eplist.find('tr').eq(i);
+            // let tl = tr.find('td').length
+            let o = {
+              id: lib.trim(tr.find('td').eq(0).text()),
+              hp: lib.trim(tr.find('td').eq(3).text()),
+              gj: lib.trim(tr.find('td').eq(4).text()),
+              fy: lib.trim(tr.find('td').eq(5).text()),
+              tg: lib.trim(tr.find('td').eq(6).text()),
+              tf: lib.trim(tr.find('td').eq(7).text()),
+              sd: lib.trim(tr.find('td').eq(8).text()),
+              zh: lib.trim(tr.find('td').eq(9).text())
+            };
+
+            // o.id = o.id.replace('\n', '');
+            // getImage(o);
+            if (o.id) {
+              console.log(o.id)
+              o.id = o.id.replace('#', '')
+              if (o.id !== lib.nowId) {
+                lib.nowId = o.id;
+                data.rows.push(o);
+              }
+            }
+          }
+
+        } catch (e) {
+          console.log(e);
+        }
+        lib.saveJson(__dirname + '/data/nl.json', JSON.stringify(data));
         // rs.send(data);
       }
     );
@@ -248,17 +389,41 @@ const lib = {
       lib.additionalFun(arr, h2.next())
     }
   },
+  getJson (path, callback) {
+    if (lib.fsExistsSync(path)) {
+      var stream = fs.createReadStream(path);
+      var data = "";
+      stream.on('data', function (chrunk) {//将数据分为一块一块的传递
+        data += chrunk;
+      });
+      stream.on('end', function () {
+        callback(JSON.parse(data))
+      });
+    }
+  },
   pokeDetail (data, res) {
     if (data.url) {
       let json = __dirname + '/data/poke/' + data.id + '.json'
+      let jsonSkill = __dirname + '/data/pokeSkill/' + data.id + '.json'
       if (lib.fsExistsSync(json)) {
         var stream = fs.createReadStream(json);
-        var data = "";
+        var chrunkData = "";
         stream.on('data', function (chrunk) {//将数据分为一块一块的传递
-          data += chrunk;
+          chrunkData += chrunk;
         });
         stream.on('end', function () {
-          lib.send(res, JSON.parse(data))
+          stream = fs.createReadStream(jsonSkill);
+          var chrunkData1 = "";
+          stream.on('data', function (chrunk) {//将数据分为一块一块的传递
+            chrunkData1 += chrunk;
+          });
+          stream.on('end', function () {
+            let sendData = JSON.parse(chrunkData)
+            sendData.skill = JSON.parse(chrunkData1)
+            lib.send(res, sendData)
+          });
+
+          // lib.send(res, JSON.parse(data))
         });
         return
       }
@@ -315,7 +480,18 @@ const lib = {
             console.log(e);
           }
           lib.saveJson(json, JSON.stringify(data))
-          lib.send(res, data)
+          if (lib.fsExistsSync(jsonSkill)) {
+            stream = fs.createReadStream(jsonSkill);
+            var chrunkData1 = "";
+            stream.on('data', function (chrunk) {//将数据分为一块一块的传递
+              chrunkData1 += chrunk;
+            });
+            stream.on('end', function () {
+              data.skill = JSON.parse(chrunkData1)
+              lib.send(res, data)
+            });
+          }
+          // lib.send(res, data)
         }
       );
     } else {
@@ -365,13 +541,16 @@ const lib = {
     } else {
       lib.sendNull(res)
     }
-  },
+  }
+  ,
   numberCall (v) {
     return !(v.indexOf('1') === -1 && v.indexOf('2') === -1 && v.indexOf('3') === -1)
-  },
+  }
+  ,
   sendNull (res) {
     res.send({code: 0})
-  },
+  }
+  ,
   send (res, data) {
     res.send({code: 1, data})
   }

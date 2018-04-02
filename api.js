@@ -27,6 +27,12 @@ const api = {
         lib.apiList();
       } else if (req.query.type === 'tx') {
         lib.apiListTx();
+      } else if (req.query.type === 'nl') {
+        lib.apiListNl();
+      } else if (req.query.type === 'ps') {
+        lib.apiListPokeSkill(req.query.id);
+      } else if (req.query.type === 'calc') {
+        lib.apiListCalc();
       }
       res.send('下载中')
     });
