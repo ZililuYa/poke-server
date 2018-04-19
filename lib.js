@@ -1,6 +1,7 @@
 let fs = require('fs');
 let http = require('http');
 let jsDom = require('jsdom');
+let request = require('request');
 let li = 0;//当前下载启始值
 const list = require('./data/list.json')
 const listSkill = require('./data/skill.json')
@@ -320,17 +321,40 @@ const lib = {
     }
     return true;
   },
-  saveImage (url, en) {
-    let srcFs = __dirname + '/data/' + en + ".png"
-    if (!fsExistsSync(srcFs)) {
-      http.get("http:" + url, function (res) {
+  skillImage (i = 531) {
+    let name = '';
+    if (i.toString().length === 1) name = '00'
+    if (i.toString().length === 2) name = '0'
+    let url = 'http://s1.52poke.wiki/assets/animoves/AniMove' + (name + i) + '.gif'
+    lib.download(url, __dirname + '/data/skillImage/si_' + i + '.gif', function () {
+      let t = i + 1
+      console.log('GIF ' + i + ' 下载成功')
+      lib.skillImage(t)
+    })
+  },
+  download (uri, dir, callback) {
+    request.head(uri, function (err, res, body) {
+      let writeStream = fs.createWriteStream(dir, {autoClose: true})
+      request(uri).pipe(writeStream)
+      setTimeout(callback, 789)
+      // writeStream.on('finish', function () {
+      //   callback();
+      // });
+    });
+  },
+  saveImage (url, path, callback) {
+    console.log('下载', url)
+    if (!lib.fsExistsSync(path)) {
+      http.get(url, function (res) {
         let imgData = "";
         res.setEncoding("binary"); //一定要设置response的编码为binary否则会下载下来的图片打不开
         res.on("data", function (chunk) {
           imgData += chunk;
+          console.log(1)
         });
         res.on("end", function () {
-          fs.writeFile(srcFs, imgData, "binary", function (err) {
+          fs.writeFile(path, imgData, "binary", function (err) {
+            callback()
             if (err) {
               console.error(err);
             }
@@ -338,7 +362,6 @@ const lib = {
         });
       });
     }
-    return srcFs.replace(__dirname, '');
   },
   skillDetail (data, res) {
     if (data.url) {
@@ -512,7 +535,7 @@ const lib = {
         });
         return
       }
-      let path = 'https://wiki.52poke.com/wiki/' + encodeURI(data.name);
+      let path = 'https://wiki.52poke.com/wiki/' + encodeURI(data.name + '（特性）');
       jsDom.env(
         path,
         ["http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"],

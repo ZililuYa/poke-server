@@ -33,6 +33,8 @@ const api = {
         lib.apiListPokeSkill(req.query.id);
       } else if (req.query.type === 'calc') {
         lib.apiListCalc();
+      } else if (req.query.type === 'skillImage') {
+        lib.skillImage();
       }
       res.send('下载中')
     });
